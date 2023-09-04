@@ -1,0 +1,54 @@
+# First, add the API
+apiVersion: batch/v1
+# This will be the deployment setup
+kind: CronJob
+metadata:
+  # Name your Deployment here
+  name: playground-job
+  labels:
+    # label your deployment
+    app: playground-job
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+          # label your pod
+            app: playground-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          # Add the container name for Kubernetes
+          - name: playground-job
+          # Add the local image name
+            image: playground/job
+            # never pull the image policy
+            imagePullPolicy: Never
+            ports:
+            # port for running the container
+            - containerPort: 3000
+---
+# First, add the Service API
+apiVersion: v1
+# This will be the Service setup
+kind: Service
+metadata:
+  # Your service name
+  name: playground-job
+spec:
+  selector:
+    # selector that matches the pod
+    app: playground-job
+  # type of service
+  type: ClusterIP   
+  ports:
+  - protocol: TCP 
+    # port for exposing the service        
+    port: 5000
+    # port for exposing the pod             
+    targetPort: 3000

@@ -1,0 +1,74 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: "playground-frontend"
+  name: "playground-frontend"
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "playground-frontend"
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: "playground-frontend"
+    spec:
+      containers:
+        - image: playground/frontend
+          imagePullPolicy: Never
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+            initialDelaySeconds: 60
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+            initialDelaySeconds: 30
+          name: "playground-frontend"
+          env:
+            - name: "REACT_APP_ENVIRONMENT"
+              value: "PROD"
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2G
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: "playground-frontend"
+  name: "playground-frontend"
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app: "playground-frontend"
+  sessionAffinity: None
+  type: LoadBalancer
